@@ -78,20 +78,26 @@
         var texts = tmpl.split(splitRex),
             list = [texts.shift()];
             
-        tmpl.replace(matchRex,function(match,match2,cmd,arg,closer,colon){
-            list.push( closer ? { cmd: '', arg: '/' } : ( colon ? { cmd: '', arg: 'else' } : { cmd: cmd, arg: arg } ) );
+        tmpl.replace(matchRex,function(match, match2, cmd, expression, closer,colon){
+            list.push( closer ?
+            			{ cmd: '', expression: '/' } :
+            			( colon ?
+            				{ cmd: '', expression: 'else' } :
+            				{ cmd: cmd, expression: expression }
+            			)
+            		);
             list.push(texts.shift());
         });
 
-        var compiled = compileTokens('root', false, list);
+        var compiled = zipTokens('root', false, list);
 
         return compiled;
     }
     
-    $compile.cmd = function(cmd_name, handler, $parse){
-        if( isString(cmd_name) && isFunction(handler) ) {
-            cmd[cmd_name] = handler;
-            handler.$parse = ($parse === undefined) ? true : $parse;
+    $compile.cmd = function(cmdName, handler, autoParse){
+        if( isString(cmdName) && isFunction(handler) ) {
+            cmd[cmdName] = handler;
+            handler.$$autoParse = (autoParse === undefined) ? true : autoParse;
         }
     };
     
@@ -111,15 +117,15 @@
         return result;
     };
     
-    function compileTokens(cmd, arg, tokens) {
+    function zipTokens(cmd, args, tokens) {
         cmd = (cmd || '').trim();
-        arg = (arg || '').trim();
+        args = (args || '').trim();
         
         var options = { content: [] },
-            current_option = 'content',
+            currentOption = 'content',
             list = [ options.content ],
-            nextOption = function(option_name) {
-                options[option_name] = []; current_option = option_name; list.push(options[option_name]);
+            nextOption = function(optionName) {
+                options[optionName] = []; currentOption = optionName; list.push(options[optionName]);
             };
         
         var token = tokens.shift();
@@ -127,34 +133,34 @@
         while( token !== undefined ){
             
             if( typeof token === 'string' ) {
-            	options[current_option].push(token);
+            	options[currentOption].push(token);
             } else if( isObject(token) ) {
                 if( token.cmd ) {
                     
                     switch(token.cmd) {
                         case 'i18n':
-                            options[current_option].push(new ModelScript(token.cmd,token.arg.replace(/\/$/,'')));
+                            options[currentOption].push(new ModelScript(token.cmd,token.expression.replace(/\/$/,'')));
                             break;
                         case 'case':
                         case 'when':
-                            nextOption(token.arg);
+                            nextOption(token.expression);
                             break;
                         default: // cmd is like a helper
-                            if( token.arg.substr(-1) === '/' ) {
-                            	options[current_option].push(new ModelScript(token.cmd,token.arg.replace(/\/$/,'')));
+                            if( token.expression.substr(-1) === '/' ) {
+                            	options[currentOption].push(new ModelScript(token.cmd, token.expression.replace(/\/$/,'') ));
                             } else {
-                            	options[current_option].push(compileTokens(token.cmd,token.arg,tokens));
+                            	options[currentOption].push(zipTokens(token.cmd, token.expression, tokens));
                             }
                             break;
                     }
                     
-                } else switch(token.arg) {
+                } else switch( token.expression ) {
                     case 'else':
                     case 'otherwise': nextOption('otherwise'); break;
                     case '/':
-                        return new ModelScript(cmd,arg,options,list); // base case
+                        return new ModelScript(cmd, args, options, list); // base case
                     default:
-                        options[current_option].push(new ModelScript('var',token.arg));
+                        options[currentOption].push( new ModelScript('var', token.expression ) );
                         break;
                 }
             }
@@ -163,7 +169,7 @@
         if( cmd !== 'root' ) {
         	console.log('something wrong in script');
         }
-        return new ModelScript(cmd,arg,options,list);
+        return new ModelScript(cmd, args, options, list);
     }
     
     function _evalExpression (expression, scope){
@@ -182,39 +188,38 @@
     cmd['?'] = cmd.if;
 
     ['root', 'var', 'if', '?'].forEach(function (key) {
-        cmd[key].$parse = true;
+        cmd[key].$$autoParse = true;
     });
     
-    function ModelScript(cmd,arg,options,list){
+    function ModelScript(cmd, arg, options, list){
     	this.cmd = cmd;
         this.options = options || {};
         this.options.args = arg.split(',');
         this.list = list || [];
     }
     
-    ModelScript.prototype.render = function(model, args){
+    ModelScript.prototype.render = function(scope){
         var tokens, _this = this;
 
-        model = model || {};
-        args = args || {};
+        this.scope = scope;
 
         if( !isFunction(cmd[_this.cmd]) ) {
         	return '[command '+_this.cmd+' not found]';
         }
         
         var params = _this.options.args;
-        _this.options.model = model;
-        if( cmd[_this.cmd].$parse ) {
+        _this.options.scope = scope;
+        if( cmd[_this.cmd].$$autoParse ) {
             params = [];
             _this.options.args.forEach(function(key){
-                params.push( key ? _evalExpression(key, model) : '');
+                params.push( key ? _evalExpression(key, scope) : '');
             });
         }
         // console.log('launching', this.cmd, _this.options, params);
         tokens = cmd[this.cmd].apply(_this.options, params);
         
         if( isArray(tokens) ) {
-        	return $compile._run(tokens,model);
+        	return $compile._run(tokens, scope);
         } else if( typeof tokens === 'string' ) {
         	return tokens;
         }
