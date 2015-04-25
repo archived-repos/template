@@ -1,0 +1,23 @@
+{
+    "name": "jstool-compile",
+    "main": "compile.js",
+    "version": "0.0.24",
+    "homepage": "https://github.com/jstools/compile",
+    "authors": [
+        "Jesús Germade <jesus@germade.es>"
+    ],
+    "description": "simple javascript compile handler",
+    "keywords": [
+        "javascript",
+        "jstools",
+        "compile"
+    ],
+    "license": "ISC",
+    "ignore": [
+        "**/.*",
+        "node_modules",
+        "bower_components",
+        "test",
+        "tests"
+    ]
+}

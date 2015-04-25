@@ -1,0 +1,40 @@
+{
+  "name": "jstool-compile",
+  "version": "0.0.24",
+  "description": "compile jstool example",
+  "main": "compile.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jstools/compile.js.git"
+  },
+  "keywords": [
+    "javascript",
+    "jstools",
+    "demo"
+  ],
+  "author": "Jesús Manuel Germade Castiñeiras <jesus@germade.es>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jstools/compile.js/issues"
+  },
+  "homepage": "https://github.com/jstools/compile.js",
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-contrib-jshint": "^0.11.2",
+    "grunt-contrib-uglify": "latest",
+    "grunt-increase-version": "latest",
+    "grunt-karma": "^0.9.0",
+    "grunt-shell": "latest",
+    "jasmine": "^2.1.1",
+    "jasmine-core": "^2.1.3",
+    "karma": "^0.12.28",
+    "karma-chrome-launcher": "^0.1.7",
+    "karma-jasmine": "^0.3.2",
+    "load-grunt-tasks": "latest",
+    "time-grunt": "latest"
+  },
+  "scripts": {
+    "test": "grunt test",
+    "posttest": "grunt uglify:min"
+  }
+}
