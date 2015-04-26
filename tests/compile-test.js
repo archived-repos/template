@@ -5,7 +5,8 @@ if( this.fn !== undefined ) {
 
 describe('compile test', function () {
 
-		var data;
+		var data,
+				samplePartial = compile.partial('sample', 'value: ${foo}');
 
 		beforeEach(function () {
 			data = {
@@ -23,6 +24,18 @@ describe('compile test', function () {
 
 		it("should replace value", function() {
 			expect( compile('value: ${foo}')(data) ).toBe('value: bar');
+    });
+
+		it("should use sample partial", function() {
+			expect( samplePartial(data) ).toBe('value: bar');
+    });
+
+		it("should include sample partial", function() {
+			expect( compile('$include{sample}')(data) ).toBe('value: bar');
+    });
+
+		it("should return if sample", function() {
+			expect( compile('$if{ foo === "bar" }$include{sample}{:}whoops{/}')(data) ).toBe('value: bar');
     });
 
 		it("should return if", function() {

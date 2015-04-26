@@ -220,36 +220,7 @@
         }
     }
 
-    var RE_EACH_INDEX = /^(.*)(\,(.*))in(.*)$/,
-        RE_EACH = /^(.*)\bin\b(.*)$/,
-        _cmdEach = function (scope, listExp, itemExp, indexExp) {
 
-          var _this = this,
-              result = '',
-              list = scope.$eval(listExp),
-              indexKey;
-
-          if( isArray(list) ) {
-            indexKey = '$index';
-          } else if( isObject(list) ) {
-            indexKey = '$key';
-          } else {
-            console.warn('can not list', list);
-            return '';
-          }
-
-          _each(list, function (item, index) {
-            var o = {};
-            o[itemExp] = item;
-            o[indexKey] = index;
-            if( indexExp ) {
-              o[indexExp] = index;
-            }
-            result += _this.content( scope.$new(o) );
-          });
-
-          return result;
-        };
 
     var cmd = {
           root: function(scope){
@@ -260,21 +231,6 @@
           },
           if: function(scope, condition){
             return scope.$eval(condition) ? this.content(scope) : this.otherwise(scope);
-          },
-          each: function (scope, expression) {
-            var _this = this, match;
-
-            match = expression.match(RE_EACH_INDEX);
-            if( match ) {
-              return _cmdEach.call(this, scope, match[4], match[1].trim(), match[3].trim());
-            }
-
-            match = expression.match(RE_EACH);
-            if ( match ) {
-              return _cmdEach.call(this, scope, match[2], match[1].trim());
-            }
-
-            throw expression + ' malformed each expression';
           }
         };
 
@@ -322,11 +278,94 @@
         return renderer;
     }
 
+
+    // compile.cmd
+
     compile.cmd = function(cmdName, handler){
         if( isString(cmdName) && isFunction(handler) ) {
             cmd[cmdName] = handler;
         }
     };
+
+
+    // each as compile.cmd example
+
+    var RE_EACH_INDEX = /^(.*)(\,(.*))in(.*)$/,
+        RE_EACH = /^(.*)\bin\b(.*)$/,
+        _cmdEach = function (scope, listExp, itemExp, indexExp) {
+
+          var _this = this,
+              result = '',
+              list = scope.$eval(listExp),
+              indexKey;
+
+          if( isArray(list) ) {
+            indexKey = '$index';
+          } else if( isObject(list) ) {
+            indexKey = '$key';
+          } else {
+            console.warn('can not list', list);
+            return '';
+          }
+
+          _each(list, function (item, index) {
+            var o = {};
+            o[itemExp] = item;
+            o[indexKey] = index;
+            if( indexExp ) {
+              o[indexExp] = index;
+            }
+            result += _this.content( scope.$new(o) );
+          });
+
+          return result;
+        };
+
+    compile.cmd('each', function (scope, expression) {
+          var _this = this, match;
+
+          match = expression.match(RE_EACH_INDEX);
+          if( match ) {
+            return _cmdEach.call(this, scope, match[4], match[1].trim(), match[3].trim());
+          }
+
+          match = expression.match(RE_EACH);
+          if ( match ) {
+            return _cmdEach.call(this, scope, match[2], match[1].trim());
+          }
+
+          throw expression + ' malformed each expression';
+        });
+
+    // partials
+
+    var _partials = {};
+
+    compile.partial = function (key, value) {
+      if( !key ) {
+        return '';
+      }
+
+      if( value ) {
+        _partials[key] = compile(value);
+      }
+      return  _partials[key];
+    };
+
+    compile.cmd('include', function (scope, expression) {
+      var partial = _partials[expression.trim()];
+      if( partial ) {
+        return partial(scope);
+      }
+      partial = _partials[scope.$eval(expression)];
+      if( partial ) {
+        return partial(scope);
+      }
+
+      throw 'partial' + expression + 'not found';
+    });
+
+    // --------------------------
 
     return compile;
 });
