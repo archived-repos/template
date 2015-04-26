@@ -6,7 +6,15 @@ if( this.fn !== undefined ) {
 describe('compile test', function () {
 
 		var data,
-				samplePartial = compile.partial('sample', 'value: ${foo}');
+				samplePartial = compile.partial('sample', 'value: ${foo}'),
+				i18n = {
+					cancel: 'Cancel',
+					accept: 'Accept'
+				};
+
+		compile.cmd('i18n', function (scope, expression) {
+				return i18n[expression.trim()] || i18n[scope.$eval(expression)] || expression.trim();
+			}, true);
 
 		beforeEach(function () {
 			data = {
@@ -18,7 +26,8 @@ describe('compile test', function () {
 				map: {
 					hi: 'all',
 					bye: 'nobody'
-				}
+				},
+				template: 'sample'
 			};
 		});
 
@@ -36,6 +45,14 @@ describe('compile test', function () {
 
 		it("should return if sample", function() {
 			expect( compile('$if{ foo === "bar" }$include{sample}{:}whoops{/}')(data) ).toBe('value: bar');
+    });
+
+		it("should return if sample as string", function() {
+			expect( compile('$if{ foo === "bar" }$include{\'sample\'}{:}whoops{/}')(data) ).toBe('value: bar');
+    });
+
+		it("should return if sample as string", function() {
+			expect( compile('$if{ foo === "bar" }$include{ template }{:}whoops{/}')(data) ).toBe('value: bar');
     });
 
 		it("should return if", function() {
@@ -80,6 +97,14 @@ describe('compile test', function () {
 			});
 
 			expect( compile('$double{4}')(data) ).toBe('8');
+    });
+
+		it("should use custom i18n command (helper)", function() {
+			expect( compile('$i18n{cancel}')() ).toBe('Cancel');
+    });
+
+		it("should use custom i18n command (helper) inside a condition", function() {
+			expect( compile('$if{ foo === "bar"}$i18n{cancel}{:}$i18n{accept}{/}, done!')(data) ).toBe('Cancel, done!');
     });
 
 });

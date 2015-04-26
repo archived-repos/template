@@ -164,21 +164,22 @@
             } else if( isObject(token) ) {
                 if( token.cmd ) {
 
-                    switch(token.cmd) {
-                        case 'i18n':
-                            options[currentOption].push(new ModelScript(token.cmd,token.expression.replace(/\/$/,'')));
-                            break;
-                        case 'case':
-                        case 'when':
-                            nextOption(token.expression);
-                            break;
-                        default: // cmd is like a helper
-                            if( token.expression.substr(-1) === '/' ) {
-                            	options[currentOption].push(new ModelScript(token.cmd, token.expression.replace(/\/$/,'') ));
-                            } else {
-                            	options[currentOption].push(raiseList(tokens, token.cmd, token.expression));
-                            }
-                            break;
+                    if( _cmd[token.cmd] && _cmd[token.cmd].standalone ) {
+                      options[currentOption].push(new ModelScript(token.cmd,token.expression.replace(/\/$/,'')));
+                    } else {
+                      switch(token.cmd) {
+                          case 'case':
+                          case 'when':
+                              nextOption(token.expression);
+                              break;
+                          default: // cmd is like a helper
+                              if( token.expression.substr(-1) === '/' ) {
+                              	options[currentOption].push(new ModelScript(token.cmd, token.expression.replace(/\/$/,'') ));
+                              } else {
+                              	options[currentOption].push(raiseList(tokens, token.cmd, token.expression));
+                              }
+                              break;
+                      }
                     }
 
                 } else switch( token.expression ) {
@@ -222,7 +223,7 @@
 
 
 
-    var cmd = {
+    var _cmd = {
           root: function(scope){
             return this.content(scope);
           },
@@ -233,8 +234,7 @@
             return scope.$eval(condition) ? this.content(scope) : this.otherwise(scope);
           }
         };
-
-    cmd['?'] = cmd.if;
+    _cmd['?'] = _cmd.if;
 
     function _optionEvaluator (content) {
       return function (scope) {
@@ -254,12 +254,12 @@
 
     ModelScript.prototype.render = function (data) {
 
-        if( !isFunction(cmd[this.cmd]) ) {
+        if( !isFunction(_cmd[this.cmd]) ) {
           return '[command ' + this.cmd+' not found]';
         }
 
         var scope = ( data instanceof Scope ) ? data : new Scope(data),
-            content = cmd[this.cmd].apply(
+            content = _cmd[this.cmd].apply(
                           this.options,
                           [scope, this.expression]
                       );
@@ -281,9 +281,10 @@
 
     // compile.cmd
 
-    compile.cmd = function(cmdName, handler){
+    compile.cmd = function(cmdName, handler, standalone){
         if( isString(cmdName) && isFunction(handler) ) {
-            cmd[cmdName] = handler;
+            handler.standalone = standalone;
+            _cmd[cmdName] = handler;
         }
     };
 
