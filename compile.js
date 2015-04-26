@@ -28,7 +28,7 @@
 
 (function (root, factory) {
     'use strict';
-    
+
     if ( typeof root === 'undefined' ) {
         if ( typeof module !== 'undefined' ) {
             module.exports = factory();
@@ -45,22 +45,14 @@
 
 })(this, function () {
     'use strict';
-    
-    var cmd = {},
-        splitRex = /\$[\w\?]*{[^\}]+}|{\$}|{\:}/,
-        matchRex = /(\$([\w\?]*){([^\}]+)})|({\$})|({\:})/g,
-        emptyModel = function (){ this._parent = this; },
-        parseExpression = function (expression) {
-        	/* jshint ignore:start */
-            return (new Function('model', 'try{ with(model) { return (' + expression + ') }; } catch(err) { return \'\'; }'));
-            /* jshint ignore:end */
-        };
+
+    function noop () {}
 
     function _instanceof (prototype) {
     	return function (o) {
     		return o instanceof prototype;
     	};
-    } 
+    }
 
     function isString (o) {
     	return typeof o === 'string';
@@ -68,8 +60,66 @@
     var isFunction = _instanceof(Function),
     	isArray = _instanceof(Array),
     	isObject = _instanceof(Object);
-    
-    function $compile(tmpl){
+
+    // ----------------------------
+
+    function parseExpression (expression) {
+        /* jshint ignore:start */
+        return (new Function('model', 'try{ with(model) { return (' + expression + ') }; } catch(err) { return \'\'; }'));
+        /* jshint ignore:end */
+    }
+
+    function _each(o, handler) {
+
+      if( !isFunction(handler) ) {
+        throw 'handler should be a function';
+      }
+
+      if( isArray(o) ) {
+        o.forEach(handler);
+      } else if( isObject(o) ) {
+        for( var key in o ) {
+          handler.apply(null, [o[key], key]);
+        }
+      }
+    }
+
+    function _extend (dest, src) {
+      for( var key in src ) {
+        dest[key] = src[key];
+      }
+    }
+
+    function Scope (data) {
+        if( data instanceof Object ) {
+            _extend(this, data);
+        }
+    }
+
+    Scope.prototype.$new = function(data) {
+        var S = function (data) {
+            if( data instanceof Object ) {
+                _extend(this, data);
+            }
+        };
+        S.prototype = this;
+        return new S(data);
+    };
+
+    Scope.prototype.$extend = function(data) {
+        return _extend(this, data);
+    };
+
+    Scope.prototype.$eval = function ( expression ) {
+        return parseExpression(expression)(this);
+    };
+
+    // ----------------------------
+
+    var splitRex = /\$[\w\?]*{[^\}]+}|{[\$\/]}|{\:}/,
+        matchRex = /(\$([\w\?]*){([^\}]+)})|({[\$\/]})|({\:})/g;
+
+    function _compile(tmpl){
 
         if( !isString(tmpl) ) {
             throw 'template should be a string';
@@ -77,8 +127,8 @@
 
         var texts = tmpl.split(splitRex),
             list = [texts.shift()];
-            
-        tmpl.replace(matchRex,function(match, match2, cmd, expression, closer,colon){
+
+        tmpl.replace(matchRex,function(match, match2, cmd, expression, closer, colon){
             list.push( closer ?
             			{ cmd: '', expression: '/' } :
             			( colon ?
@@ -89,54 +139,31 @@
             list.push(texts.shift());
         });
 
-        var compiled = zipTokens('root', false, list);
+        var compiled = raiseList(list, 'root');
 
         return compiled;
     }
-    
-    $compile.cmd = function(cmdName, handler, autoParse){
-        if( isString(cmdName) && isFunction(handler) ) {
-            cmd[cmdName] = handler;
-            handler.$$autoParse = (autoParse === undefined) ? true : autoParse;
-        }
-    };
-    
-    $compile._run = function(tokens, model) {
-        var result = '';
-            
-        tokens.forEach(function(token){
-            if( isString(token) ) {
-            	result += token;
-            } else if( token instanceof ModelScript ) {
-            	result += token.render(model);
-            } else if( isArray(token) ) {
-            	result += $compile._run(token,model);
-            }
-        });
-        
-        return result;
-    };
-    
-    function zipTokens(cmd, args, tokens) {
+
+    function raiseList(tokens, cmd, expression) {
         cmd = (cmd || '').trim();
-        args = (args || '').trim();
-        
+        expression = expression || '';
+
         var options = { content: [] },
             currentOption = 'content',
-            list = [ options.content ],
-            nextOption = function(optionName) {
-                options[optionName] = []; currentOption = optionName; list.push(options[optionName]);
+            nextOption = function (optionName) {
+                options[optionName] = [];
+                currentOption = optionName;
             };
-        
+
         var token = tokens.shift();
 
         while( token !== undefined ){
-            
+
             if( typeof token === 'string' ) {
             	options[currentOption].push(token);
             } else if( isObject(token) ) {
                 if( token.cmd ) {
-                    
+
                     switch(token.cmd) {
                         case 'i18n':
                             options[currentOption].push(new ModelScript(token.cmd,token.expression.replace(/\/$/,'')));
@@ -149,16 +176,16 @@
                             if( token.expression.substr(-1) === '/' ) {
                             	options[currentOption].push(new ModelScript(token.cmd, token.expression.replace(/\/$/,'') ));
                             } else {
-                            	options[currentOption].push(zipTokens(token.cmd, token.expression, tokens));
+                            	options[currentOption].push(raiseList(tokens, token.cmd, token.expression));
                             }
                             break;
                     }
-                    
+
                 } else switch( token.expression ) {
                     case 'else':
                     case 'otherwise': nextOption('otherwise'); break;
                     case '/':
-                        return new ModelScript(cmd, args, options, list); // base case
+                        return new ModelScript(cmd, expression, options); // base case
                     default:
                         options[currentOption].push( new ModelScript('var', token.expression ) );
                         break;
@@ -169,114 +196,116 @@
         if( cmd !== 'root' ) {
         	console.log('something wrong in script');
         }
-        return new ModelScript(cmd, args, options, list);
+        return new ModelScript(cmd, expression, options);
     }
-    
-    function _evalExpression (expression, scope){
-        scope = scope || {};
 
-        if( /^[^\s\.]+$/.test(expression) ) {
-            return scope[expression] || '';
+    _compile.cmd = function(cmdName, handler){
+        if( isString(cmdName) && isFunction(handler) ) {
+            cmd[cmdName] = handler;
         }
-
-        return parseExpression(expression)(scope);
-    }
-    
-    cmd.root = function(){ return this.content; };
-    cmd.var = function(value){ return isObject(value) ? '' : (value || ''); };
-    cmd.if = function(cond){ return cond ? this.content : ( this.otherwise || ''); };
-    cmd['?'] = cmd.if;
-
-    ['root', 'var', 'if', '?'].forEach(function (key) {
-        cmd[key].$$autoParse = true;
-    });
-    
-    function ModelScript(cmd, arg, options, list){
-    	this.cmd = cmd;
-        this.options = options || {};
-        this.options.args = arg.split(',');
-        this.list = list || [];
-    }
-    
-    ModelScript.prototype.render = function(scope){
-        var tokens, _this = this;
-
-        this.scope = scope;
-
-        if( !isFunction(cmd[_this.cmd]) ) {
-        	return '[command '+_this.cmd+' not found]';
-        }
-        
-        var params = _this.options.args;
-        _this.options.scope = scope;
-        if( cmd[_this.cmd].$$autoParse ) {
-            params = [];
-            _this.options.args.forEach(function(key){
-                params.push( key ? _evalExpression(key, scope) : '');
-            });
-        }
-        // console.log('launching', this.cmd, _this.options, params);
-        tokens = cmd[this.cmd].apply(_this.options, params);
-        
-        if( isArray(tokens) ) {
-        	return $compile._run(tokens, scope);
-        } else if( typeof tokens === 'string' ) {
-        	return tokens;
-        }
-        return '' + tokens;
     };
 
-    $compile.cmd('each',function(collection){
+    function _evalContent(scope, content) {
         var result = '';
-        if( isArray(collection) ) {
-            collection.forEach(function(model){
-                result += $compile._run(this.content,model);
-            });
+
+        if( isFunction(content) ) {
+          return content(scope);
+        } else if( isArray(content) ) {
+
+          // console.warn('_evalContent', scope, content);
+          content.forEach(function(token){
+              if( isString(token) ) {
+              	result += token;
+              } else if( token instanceof ModelScript ) {
+              	result += token.render(scope);
+              } else if( isArray(token) ) {
+              	result += _evalContent(scope, content);
+              }
+          });
+
+          return result;
+        } else {
+          return content;
         }
-        return result;
-    });
-    
-    // $compile.cmd('for',function(){
-    //     var _for = this, result = '', selected_object = false;
-        
-    //     function _run (object_selector, var_name) {
-    //         selected_object = _modelQuery(_for.model, object_selector);
-    //         if( selected_object instanceof Array ) {
-    //             selected_object.forEach(function(item){
-    //                 var submodel = { _parent: _for.model };
-    //                 if(var_name) {
-    //                 	submodel[var_name] = item; }
-    //                 else {
-    //                 	submodel = item;
-    //                 }
-    //                 result += $compile._run(_for.content,submodel);
-    //             });
-    //         } else if( selected_object instanceof Object ) {
-    //             Object.keys(selected_object).forEach(function(key){
-    //             	var submodel = { _parent: _for.model },
-    //             		item = selected_object[key];
+    }
 
-    //                 if(var_name) {
-    //                 	submodel[var_name] = item;
-    //                 } else {
-    //                 	submodel = item;
-    //                 }
-    //                 result += $compile._run(_for.content,submodel);
-    //             });
-    //         }
-    //     }
-        
-    //     if( /^\s*\S+\s+in\s+\S+\s*$/.test(this.args[0]) ) {
-    //         var params = this.args[0].match(/^\s*(\S+)\s+in\s+(\S+)\s*$/);
-    //         _run(params[2], params[1]);
-    //     }
-    //     return result;
-    // }, false);
-    
-    // $compile.cmd('with',function(){ return $compile._run(this.content, _modelQuery(this.model,this.args[0]) ); });
+    var RE_EACH = /^(.*)\bin\b(.*)$/,
+      cmd = {
+        root: function(scope){
+          return this.content(scope);
+        },
+        var: function(scope, expression){
+          return scope.$eval(expression);
+        },
+        if: function(scope, condition){
+          return scope.$eval(condition) ? this.content(scope) : this.otherwise(scope);
+        },
+        each: function (scope, expression) {
+          var _this = this;
+          console.log('each', expression, RE_EACH.test(expression) );
+          return expression.replace(RE_EACH, function (match, itemExp, listExp) {
 
-    return function (template) {
-        var compiled = $compile(template),
+            var o = {},
+                result = '',
+                list = scope.$eval(listExp);
+
+            itemExp = itemExp.trim();
+
+            if( isArray(list) ) {
+              for( var i = 0, len = list.length; i < len ; i++ ) {
+                o[itemExp] = list[i];
+                o.$index = i;
+                result += _this.content( scope.$new(o) );
+              }
+            } else if( isObject(list) ) {
+              for( var key in list ) {
+                o[itemExp] = list[key];
+                o.$key = key;
+                result += _this.content( scope.$new(o) );
+              }
+            }
+            return result;
+          });
+        }
+      };
+    cmd['?'] = cmd.if;
+
+    function _optionEvaluator (content) {
+      return function (scope) {
+        return _evalContent(scope, content );
+      };
+    }
+
+    function ModelScript(cmd, expression, options){
+        this.cmd = cmd;
+        this.expression = expression;
+        this.options = { content: noop, otherwise: noop };
+
+        for( var key in options ) {
+          this.options[key] = _optionEvaluator(options[key]);
+        }
+    }
+
+    ModelScript.prototype.render = function (data) {
+
+        if( !isFunction(cmd[this.cmd]) ) {
+          return '[command ' + this.cmd+' not found]';
+        }
+
+        // var scope = ( data && data.$new ) ? data.$new() : new Scope(data),
+        var scope = ( data instanceof Scope ) ? data : new Scope(data),
+            content = cmd[this.cmd].apply(
+                          this.options,
+                          [scope].concat( this.expression.split(',') )
+                      );
+
+        // console.log('render', scope, scope.foo, content);
+
+        return _evalContent(scope, content);
+    };
+
+    function compile (template) {
+        var compiled = _compile(template),
             renderer = function (scope) {
                 return compiled.render(scope);
             };
@@ -284,5 +313,7 @@
         renderer.compiled = compiled;
 
         return renderer;
-    };
+    }
+
+    return compile;
 });
