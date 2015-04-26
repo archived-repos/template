@@ -1,5 +1,5 @@
 {
-  "name": "jstool-compile",
+  "name": "jn-compile",
   "version": "0.1.0",
   "description": "compile jstool example",
   "main": "compile.js",
