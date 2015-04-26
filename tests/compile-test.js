@@ -27,7 +27,10 @@ describe('compile test', function () {
 					hi: 'all',
 					bye: 'nobody'
 				},
-				template: 'sample'
+				template: 'sample',
+				label: {
+					cancel: 'cancel'
+				}
 			};
 		});
 
@@ -100,7 +103,7 @@ describe('compile test', function () {
     });
 
 		it("should use custom i18n command (helper)", function() {
-			expect( compile('$i18n{cancel}')() ).toBe('Cancel');
+			expect( compile('$i18n{label.cancel}')(data) ).toBe('Cancel');
     });
 
 		it("should use custom i18n command (helper) inside a condition", function() {
