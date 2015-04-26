@@ -107,7 +107,7 @@ describe('compile test', function () {
     });
 
 		it("should use custom i18n command (helper) inside a condition", function() {
-			expect( compile('$if{ foo === "bar"}$i18n{cancel}{:}$i18n{accept}{/}, done!')(data) ).toBe('Cancel, done!');
+			expect( compile('$if{ foo === "bar" }$i18n{cancel}{:}$i18n{accept}{/}, done!')(data) ).toBe('Cancel, done!');
     });
 
 });

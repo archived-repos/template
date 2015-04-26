@@ -1,13 +1,13 @@
 module.exports = function(config) {
-  
+
   var configuration = {
     frameworks: ['jasmine'],
-    plugins: [ 'karma-jasmine', 'karma-chrome-launcher' ],
+    plugins: [ 'karma-jasmine', 'karma-chrome-launcher', 'karma-firefox-launcher' ],
     files: [
     	'compile.js',
      	'tests/*.js'
     ],
-    browsers: [ 'Chrome' ],
+    browsers: [ 'Chrome', 'Firefox' ],
     customLaunchers: {
       Chrome_travis_ci: {
         base: 'Chrome',
