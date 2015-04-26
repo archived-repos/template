@@ -13,7 +13,7 @@ describe('compile test', function () {
 				crash: {
 					test: 'dummy'
 				},
-				list: [1, 2, 3]
+				list: ['foo', 'bar', 'foobar']
 			};
 		});
 
@@ -21,12 +21,20 @@ describe('compile test', function () {
 			expect( compile('value: ${foo}')(scope) ).toBe('value: bar');
     });
 
-		it("should replace value", function() {
+		it("should return if", function() {
 			expect( compile('$if{ foo === "bar" }gogogo{:}whoops{/}')(scope) ).toBe('gogogo');
     });
 
-		it("should replace value", function() {
-			expect( compile('$each{ item in list },${item}{/}')(scope) ).toBe(',1,2,3');
+		it("should return otherwise", function() {
+			expect( compile('$if{ foo !== "bar" }gogogo{:}whoops{/}')(scope) ).toBe('whoops');
+    });
+
+		it("should return list", function() {
+			expect( compile('$each{ item in list },${item}{/}')(scope) ).toBe(',foo,bar,foobar');
+    });
+
+		it("should return list with index", function() {
+			expect( compile('$each{ item in list }[${$index}:${item}]{/}')(scope) ).toBe('[0:foo][1:bar][2:foobar]');
     });
 
 });

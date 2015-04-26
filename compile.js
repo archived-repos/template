@@ -242,7 +242,7 @@
         },
         each: function (scope, expression) {
           var _this = this;
-          console.log('each', expression, RE_EACH.test(expression) );
+          
           return expression.replace(RE_EACH, function (match, itemExp, listExp) {
 
             var o = {},
