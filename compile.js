@@ -229,45 +229,64 @@
         }
     }
 
-    var RE_EACH = /^(.*)\bin\b(.*)$/,
-      cmd = {
-        root: function(scope){
-          return this.content(scope);
-        },
-        var: function(scope, expression){
-          return scope.$eval(expression);
-        },
-        if: function(scope, condition){
-          return scope.$eval(condition) ? this.content(scope) : this.otherwise(scope);
-        },
-        each: function (scope, expression) {
-          var _this = this;
-          
-          return expression.replace(RE_EACH, function (match, itemExp, listExp) {
+    var RE_EACH_INDEX = /^(.*)(\,(.*))in(.*)$/,
+        RE_EACH = /^(.*)\bin\b(.*)$/,
+        _cmdEach = function (scope, listExp, itemExp, indexExp) {
 
-            var o = {},
-                result = '',
-                list = scope.$eval(listExp);
+          var _this = this,
+              result = '',
+              list = scope.$eval(listExp),
+              indexKey;
 
-            itemExp = itemExp.trim();
+          if( isArray(list) ) {
+            indexKey = '$index';
+          } else if( isObject(list) ) {
+            indexKey = '$key';
+          } else {
+            console.warn('can not list', list);
+            return '';
+          }
 
-            if( isArray(list) ) {
-              for( var i = 0, len = list.length; i < len ; i++ ) {
-                o[itemExp] = list[i];
-                o.$index = i;
-                result += _this.content( scope.$new(o) );
-              }
-            } else if( isObject(list) ) {
-              for( var key in list ) {
-                o[itemExp] = list[key];
-                o.$key = key;
-                result += _this.content( scope.$new(o) );
-              }
+          _each(list, function (item, index) {
+            var o = {};
+            o[itemExp] = item;
+            o[indexKey] = index;
+            if( indexExp ) {
+              o[indexExp] = index;
             }
-            return result;
+            result += _this.content( scope.$new(o) );
           });
-        }
-      };
+
+          return result;
+        };
+
+    var cmd = {
+          root: function(scope){
+            return this.content(scope);
+          },
+          var: function(scope, expression){
+            return scope.$eval(expression);
+          },
+          if: function(scope, condition){
+            return scope.$eval(condition) ? this.content(scope) : this.otherwise(scope);
+          },
+          each: function (scope, expression) {
+            var _this = this, match;
+
+            match = expression.match(RE_EACH_INDEX);
+            if( match ) {
+              return _cmdEach.call(this, scope, match[4], match[1].trim(), match[3].trim());
+            }
+
+            match = expression.match(RE_EACH);
+            if ( match ) {
+              return _cmdEach.call(this, scope, match[2], match[1].trim());
+            }
+
+            throw expression + ' malformed each expression';
+          }
+        };
+
     cmd['?'] = cmd.if;
 
     function _optionEvaluator (content) {
@@ -296,7 +315,7 @@
         var scope = ( data instanceof Scope ) ? data : new Scope(data),
             content = cmd[this.cmd].apply(
                           this.options,
-                          [scope].concat( this.expression.split(',') )
+                          [scope, this.expression]
                       );
 
         // console.log('render', scope, scope.foo, content);

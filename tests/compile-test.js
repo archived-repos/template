@@ -37,4 +37,8 @@ describe('compile test', function () {
 			expect( compile('$each{ item in list }[${$index}:${item}]{/}')(scope) ).toBe('[0:foo][1:bar][2:foobar]');
     });
 
+		it("should return list with index", function() {
+			expect( compile('$each{ item,key in list }[${key}:${item}]{/}')(scope) ).toBe('[0:foo][1:bar][2:foobar]');
+    });
+
 });
