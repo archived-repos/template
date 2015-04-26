@@ -193,17 +193,8 @@
             }
             token = tokens.shift();
         }
-        if( cmd !== 'root' ) {
-        	console.log('something wrong in script');
-        }
         return new ModelScript(cmd, expression, options);
     }
-
-    _compile.cmd = function(cmdName, handler){
-        if( isString(cmdName) && isFunction(handler) ) {
-            cmd[cmdName] = handler;
-        }
-    };
 
     function _evalContent(scope, content) {
         var result = '';
@@ -311,16 +302,13 @@
           return '[command ' + this.cmd+' not found]';
         }
 
-        // var scope = ( data && data.$new ) ? data.$new() : new Scope(data),
         var scope = ( data instanceof Scope ) ? data : new Scope(data),
             content = cmd[this.cmd].apply(
                           this.options,
                           [scope, this.expression]
                       );
 
-        // console.log('render', scope, scope.foo, content);
-
-        return _evalContent(scope, content);
+        return '' + _evalContent(scope, content);
     };
 
     function compile (template) {
@@ -333,6 +321,12 @@
 
         return renderer;
     }
+
+    compile.cmd = function(cmdName, handler){
+        if( isString(cmdName) && isFunction(handler) ) {
+            cmd[cmdName] = handler;
+        }
+    };
 
     return compile;
 });

@@ -5,10 +5,10 @@ if( this.fn !== undefined ) {
 
 describe('compile test', function () {
 
-		var scope;
+		var data;
 
 		beforeEach(function () {
-			scope = {
+			data = {
 				foo: 'bar',
 				crash: {
 					test: 'dummy'
@@ -18,27 +18,35 @@ describe('compile test', function () {
 		});
 
 		it("should replace value", function() {
-			expect( compile('value: ${foo}')(scope) ).toBe('value: bar');
+			expect( compile('value: ${foo}')(data) ).toBe('value: bar');
     });
 
 		it("should return if", function() {
-			expect( compile('$if{ foo === "bar" }gogogo{:}whoops{/}')(scope) ).toBe('gogogo');
+			expect( compile('$if{ foo === "bar" }gogogo{:}whoops{/}')(data) ).toBe('gogogo');
     });
 
 		it("should return otherwise", function() {
-			expect( compile('$if{ foo !== "bar" }gogogo{:}whoops{/}')(scope) ).toBe('whoops');
+			expect( compile('$if{ foo !== "bar" }gogogo{:}whoops{/}')(data) ).toBe('whoops');
     });
 
 		it("should return list", function() {
-			expect( compile('$each{ item in list },${item}{/}')(scope) ).toBe(',foo,bar,foobar');
+			expect( compile('$each{ item in list },${item}{/}')(data) ).toBe(',foo,bar,foobar');
     });
 
 		it("should return list with index", function() {
-			expect( compile('$each{ item in list }[${$index}:${item}]{/}')(scope) ).toBe('[0:foo][1:bar][2:foobar]');
+			expect( compile('$each{ item in list }[${$index}:${item}]{/}')(data) ).toBe('[0:foo][1:bar][2:foobar]');
     });
 
 		it("should return list with index", function() {
-			expect( compile('$each{ item,key in list }[${key}:${item}]{/}')(scope) ).toBe('[0:foo][1:bar][2:foobar]');
+			expect( compile('$each{ item,key in list }[${key}:${item}]{/}')(data) ).toBe('[0:foo][1:bar][2:foobar]');
+    });
+
+		it("should add new command", function() {
+			compile.cmd('double', function (scope, expression) {
+				return Number(scope.$eval(expression))*2;
+			});
+
+			expect( compile('$double{4}')(data) ).toBe('8');
     });
 
 });
