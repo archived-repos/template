@@ -1,5 +1,5 @@
 {
-    "name": "jn-compile",
+    "name": "jstools-compile",
     "main": "compile.js",
     "version": "0.1.0",
     "homepage": "https://github.com/jstools/compile",
