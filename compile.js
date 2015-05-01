@@ -236,7 +236,7 @@
 
     function _optionEvaluator (content) {
       return function (scope) {
-        return _evalContent(scope, content );
+        return _evalContent(scope, content ) || '';
       };
     }
 
