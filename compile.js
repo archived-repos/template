@@ -29,10 +29,8 @@
 (function (root, factory) {
     'use strict';
 
-    if ( typeof root === 'undefined' ) {
-        if ( typeof module !== 'undefined' ) {
-            module.exports = factory();
-        }
+    if ( typeof module !== 'undefined' ) {
+        module.exports = factory();
     } else {
     	if ( root.define !== undefined ) {
             root.define('compile', factory );
