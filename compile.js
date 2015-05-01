@@ -236,7 +236,7 @@
 
     function _optionEvaluator (content) {
       return function (scope) {
-        return _evalContent(scope, content ) || '';
+        return _evalContent(scope, content );
       };
     }
 
@@ -260,9 +260,10 @@
             content = _cmd[this.cmd].apply(
                           this.options,
                           [scope, this.expression]
-                      );
+                      ),
+            contentRendered = _evalContent(scope, content);
 
-        return '' + _evalContent(scope, content);
+        return contentRendered === undefined ? '' : contentRendered;
     };
 
     function compile (template) {

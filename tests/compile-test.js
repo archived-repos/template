@@ -66,6 +66,10 @@ describe('compile test', function () {
 			expect( compile('$if{ foo !== "bar" }gogogo{:}whoops{/}')(data) ).toBe('whoops');
     });
 
+		it("should return otherwise (2)", function() {
+			expect( compile('$if{ foo !== "bar" }gogogo{:}{/}')(data) ).toBe('');
+    });
+
 		it("should return list", function() {
 			expect( compile('$each{ item in list },${item}{/}')(data) ).toBe(',foo,bar,foobar');
     });
