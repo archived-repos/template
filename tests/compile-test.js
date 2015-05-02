@@ -1,8 +1,4 @@
 
-if( this.fn !== undefined ) {
-	var $compile = fn('compile');
-}
-
 describe('compile test', function () {
 
 		var data,
