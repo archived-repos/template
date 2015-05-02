@@ -6,13 +6,13 @@ if( this.fn !== undefined ) {
 describe('compile test', function () {
 
 		var data,
-				samplePartial = compile.partial('sample', 'value: ${foo}'),
+				samplePartial = $compile.partial('sample', 'value: ${foo}'),
 				i18n = {
 					cancel: 'Cancel',
 					accept: 'Accept'
 				};
 
-		compile.cmd('i18n', function (scope, expression) {
+		$compile.cmd('i18n', function (scope, expression) {
 				return i18n[expression.trim()] || i18n[scope.$eval(expression)] || expression.trim();
 			}, true);
 
@@ -99,7 +99,7 @@ describe('compile test', function () {
     });
 
 		it("should add new command", function() {
-			compile.cmd('double', function (scope, expression) {
+			$compile.cmd('double', function (scope, expression) {
 				return Number(scope.$eval(expression))*2;
 			});
 

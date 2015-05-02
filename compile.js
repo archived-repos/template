@@ -36,7 +36,7 @@
             root.define('$compile', factory );
         } else if ( root.angular ) {
             var $compile = factory(root);
-            angular.module('jstools.compile', [])
+            root.angular.module('jstools.compile', [])
               .provider('$compile', function () {
                 this.config = function (configFn) {
                   configFn.call(null, $compile);

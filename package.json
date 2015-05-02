@@ -1,6 +1,6 @@
 {
     "name": "jstools-compile",
-    "version": "0.1.6",
+    "version": "0.1.10",
     "description": "compile jstool example",
     "main": "compile.js",
     "repository": {
