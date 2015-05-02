@@ -33,11 +33,23 @@
         module.exports = factory();
     } else {
     	if ( root.define !== undefined ) {
-            root.define('compile', factory );
-        } else if ( root.fn !== undefined ) {
-            root.fn.define('compile', factory );
-        } else if( !root.compile ) {
-            root.compile = factory();
+            root.define('$compile', factory );
+        } else if ( root.angular ) {
+            var $compile = factory(root);
+            angular.module('jstools.compile', [])
+              .provider('$compile', function () {
+                this.config = function (configFn) {
+                  configFn.call(null, $compile);
+                };
+
+                this.$get = function () {
+                  return $compile;
+                };
+              });
+        } else if ( root.define !== undefined ) {
+            root.define('$compile', factory );
+        } else if( !root.$compile ) {
+            root.$compile = factory();
         }
     }
 
