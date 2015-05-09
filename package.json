@@ -1,6 +1,6 @@
 {
     "name": "jstools-template",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "powerful javascript template engine",
     "main": "template.js",
     "repository": {

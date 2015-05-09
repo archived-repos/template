@@ -1,7 +1,7 @@
 {
     "name": "jstools-template",
     "main": "template.js",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "homepage": "https://github.com/jstools/template",
     "authors": [
         "Jesús Germade <jesus@germade.es>"
