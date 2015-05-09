@@ -1,16 +1,16 @@
-jEngine: $compile [![wercker status](https://app.wercker.com/status/5cf7af073a466325d96ad751d99761c5/s "wercker status")](https://app.wercker.com/project/bykey/5cf7af073a466325d96ad751d99761c5)
+jEngine: $template [![wercker status](https://app.wercker.com/status/5cf7af073a466325d96ad751d99761c5/s "wercker status")](https://app.wercker.com/project/bykey/5cf7af073a466325d96ad751d99761c5)
 =============================
-[![Bower version](https://badge.fury.io/bo/jstools-compile.svg)](http://badge.fury.io/bo/jstools-compile)
-[![npm version](https://badge.fury.io/js/jstools-compile.svg)](http://badge.fury.io/js/jstools-compile)
-[![Build Status](https://travis-ci.org/jstools/compile.svg?branch=master)](https://travis-ci.org/jstools/compile)
+[![Bower version](https://badge.fury.io/bo/jstools-template.svg)](http://badge.fury.io/bo/jstools-template)
+[![npm version](https://badge.fury.io/js/jstools-template.svg)](http://badge.fury.io/js/jstools-template)
+[![Build Status](https://travis-ci.org/jstools/template.svg?branch=master)](https://travis-ci.org/jstools/template)
 Installation
 ------------
 ```.sh
-npm install jstools-compile --save
+npm install jstools-template --save
 ```
   or
 ```.sh
-bower install jstools-compile --save
+bower install jstools-template --save
 ```
 Usage
 -----
@@ -31,9 +31,9 @@ var data = {
   }
 };
 
-$compile('$if{ foo === "bar" }gogogo{:}whoops{/}')(data)
+$template('$if{ foo === "bar" }gogogo{:}whoops{/}')(data)
 // returns 'gogogo'
 
-compile('$each{ item, key in map }[${foo}:${key}:${item}]{/}')(data);
+$template('$each{ item, key in map }[${foo}:${key}:${item}]{/}')(data);
 // returns '[bar:hi:all][bar:bye:nobody]'
 ```

@@ -4,7 +4,7 @@ module.exports = function(config) {
     frameworks: ['jasmine'],
     plugins: [ 'karma-jasmine', 'karma-chrome-launcher', 'karma-firefox-launcher' ],
     files: [
-    	'compile.js',
+    	'template.js',
      	'tests/*.js'
     ],
     browsers: [ 'Chrome', 'Firefox' ],

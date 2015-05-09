@@ -33,23 +33,23 @@
         module.exports = factory();
     } else {
     	if ( root.define !== undefined ) {
-            root.define('$compile', factory );
+            root.define('$template', factory );
         } else if ( root.angular ) {
-            var $compile = factory(root);
-            root.angular.module('jstools.compile', [])
-              .provider('$compile', function () {
+            var $template = factory(root);
+            root.angular.module('jstools.template', [])
+              .provider('$template', function () {
                 this.config = function (configFn) {
-                  configFn.call(null, $compile);
+                  configFn.call(null, $template);
                 };
 
                 this.$get = function () {
-                  return $compile;
+                  return $template;
                 };
               });
         } else if ( root.define !== undefined ) {
-            root.define('$compile', factory );
-        } else if( !root.$compile ) {
-            root.$compile = factory();
+            root.define('$template', factory );
+        } else if( !root.$template ) {
+            root.$template = factory();
         }
     }
 
@@ -289,15 +289,31 @@
         return renderer;
     }
 
-
-    // compile.cmd
-
     compile.cmd = function(cmdName, handler, standalone){
         if( isString(cmdName) && isFunction(handler) ) {
             handler.standalone = standalone;
             _cmd[cmdName] = handler;
         }
     };
+
+    // template as templates cache
+
+    function template (name, tmpl) {
+      if( tmpl === undefined ) {
+        return name ? template.cache[name] : undefined;
+      }
+
+      if( isString(name) && isString(tmpl) ) {
+        template.cache[name] = compile(tmpl);
+        template.cache[name].src = tmpl;
+      }
+
+      return template.cache[name];
+    }
+    template.compile = compile;
+    template.cache = {};
+    template.cmd = compile.cmd;
+    template.helper = compile.cmd;
 
 
     // each as compile.cmd example
@@ -333,7 +349,7 @@
           return result;
         };
 
-    compile.cmd('each', function (scope, expression) {
+    template.cmd('each', function (scope, expression) {
           var _this = this, match;
 
           match = expression.match(RE_EACH_INDEX);
@@ -349,27 +365,14 @@
           throw expression + ' malformed each expression';
         });
 
-    // partials
+    // cmd: include
 
-    var _partials = {};
-
-    compile.partial = function (key, value) {
-      if( !key ) {
-        return '';
-      }
-
-      if( value ) {
-        _partials[key] = compile(value);
-      }
-      return  _partials[key];
-    };
-
-    compile.cmd('include', function (scope, expression) {
-      var partial = _partials[expression.trim()];
+    template.cmd('include', function (scope, expression) {
+      var partial = template( expression.trim() );
       if( partial ) {
         return partial(scope);
       }
-      partial = _partials[scope.$eval(expression)];
+      partial = template( scope.$eval(expression) );
       if( partial ) {
         return partial(scope);
       }
@@ -379,5 +382,5 @@
 
     // --------------------------
 
-    return compile;
+    return template;
 });

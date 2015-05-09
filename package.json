@@ -1,11 +1,11 @@
 {
-    "name": "jstools-compile",
-    "version": "0.1.11",
-    "description": "compile jstool example",
-    "main": "compile.js",
+    "name": "jstools-template",
+    "version": "0.1.0",
+    "description": "powerful javascript template engine",
+    "main": "template.js",
     "repository": {
         "type": "git",
-        "url": "git@github.com:jstools/compile.git"
+        "url": "git@github.com:jstools/template.git"
     },
     "keywords": [
         "javascript",
@@ -15,9 +15,9 @@
     "author": "Jesús Manuel Germade Castiñeiras <jesus@germade.es>",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/jstools/compile/issues"
+        "url": "https://github.com/jstools/template/issues"
     },
-    "homepage": "https://github.com/jstools/compile",
+    "homepage": "https://github.com/jstools/template",
     "devDependencies": {
         "grunt": "^0.4.5",
         "grunt-contrib-jshint": "^0.11.2",

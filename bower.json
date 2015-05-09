@@ -1,12 +1,12 @@
 {
-    "name": "jstools-compile",
-    "main": "compile.js",
-    "version": "0.1.11",
-    "homepage": "https://github.com/jstools/compile",
+    "name": "jstools-template",
+    "main": "template.js",
+    "version": "0.1.0",
+    "homepage": "https://github.com/jstools/template",
     "authors": [
         "Jesús Germade <jesus@germade.es>"
     ],
-    "description": "simple javascript compile handler",
+    "description": "powerful javascript template engine",
     "keywords": [
         "javascript",
         "jstools",
