@@ -31,9 +31,9 @@ var data = {
   }
 };
 
-$template('$if{ foo === "bar" }gogogo{:}whoops{/}')(data)
+$template.compile('$if{ foo === "bar" }gogogo{:}whoops{/}')(data)
 // returns 'gogogo'
 
-$template('$each{ item, key in map }[${foo}:${key}:${item}]{/}')(data);
+$template.compile('$each{ item, key in map }[${foo}:${key}:${item}]{/}')(data);
 // returns '[bar:hi:all][bar:bye:nobody]'
 ```
