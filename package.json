@@ -1,5 +1,5 @@
 {
-    "name": "jstools-template",
+    "name": "jengine-template",
     "version": "0.1.2",
     "description": "powerful javascript template engine",
     "main": "template.js",
